@@ -1,0 +1,83 @@
+# syntax = docker/dockerfile:experimental
+FROM ubuntu:20.04
+
+# To make it easier for build and release pipelines to run apt-get,
+# configure apt to not require confirmation (assume the -y argument by default)
+ENV DEBIAN_FRONTEND=noninteractive
+ENV DOCKER_CHANNEL test
+ENV DOCKER_VERSION 20.10.2
+ENV DOCKER_COMPOSE_VERSION 1.29.2
+ENV PYTHON_VERSION 3.9.0
+ENV DEFAULT_JDK_VERSION 8
+
+ENV LANG C.UTF-8
+
+ENV JAVA_HOME /usr/local/openjdk-8
+ENV PATH $JAVA_HOME/bin:/usr/local/bin:$PATH
+ENV JAVA_TOOL_OPTIONS=-Dfile.encoding=UTF8
+
+RUN echo "APT::Get::Assume-Yes \"true\";" > /etc/apt/apt.conf.d/90assumeyes
+RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/apt apt-get update \
+ && apt-get install -y --no-install-recommends build-essential \
+        ca-certificates \
+        curl \
+        jq \
+        git \
+        iputils-ping \
+        libcurl4 \
+        libunwind8 \
+        netcat \
+        openjdk-8-jdk \
+        python3-pip \
+        python-dev \
+        gcc \
+        libc-dev \
+        libffi-dev \
+        libgcc-8-dev \
+        libssl-dev \
+        make \
+        openssl \
+        zlib1g-dev \
+        zip
+
+RUN set -ex \
+ && curl -fL "https://download.docker.com/linux/static/$DOCKER_CHANNEL/`uname -m`/docker-${DOCKER_VERSION}.tgz" -o docker.tgz \
+ && tar --extract --file docker.tgz --strip-components 1 --directory /usr/local/bin \
+ && rm docker.tgz \
+ && docker -v
+
+RUN set -x \
+ && curl -fSL "https://github.com/docker/compose/releases/download/$DOCKER_COMPOSE_VERSION/docker-compose-`uname -s`-`uname -m`" -o /usr/local/bin/docker-compose \
+ && chmod +x /usr/local/bin/docker-compose \
+ && docker-compose -v
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends unzip \
+ && rm -rf /var/lib/apt/lists/* \
+ && rm -rf /etc/apt/sources.list.d/*
+
+
+# Install Java Tools (Ant, Gradle, Maven)
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+    ant \
+    ant-optional \
+ && rm -rf /var/lib/apt/lists/*
+RUN curl -sL https://services.gradle.org/distributions/gradle-4.6-bin.zip -o gradle-4.6.zip \
+ && unzip -d /usr/share gradle-4.6.zip \
+ && ln -s /usr/share/gradle-4.6/bin/gradle /usr/bin/gradle \
+ && rm gradle-4.6.zip
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+    maven \
+ && rm -rf /var/lib/apt/lists/*
+ENV ANT_HOME=/usr/share/ant \
+    GRADLE_HOME=/usr/share/gradle \
+    M2_HOME=/usr/share/maven
+
+WORKDIR /azp
+
+COPY ./start.sh .
+RUN chmod +x start.sh
+
+CMD ["./start.sh"]
