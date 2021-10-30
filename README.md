@@ -1,5 +1,5 @@
 # Introduction
-This project holds 2 dockerfiles to generate custom Azure DevOps [vsts-agent] docker images
+This project holds 2 dockerfiles to generate custom Azure DevOps Agent [vsts-agent] docker images
 
 # Getting Started
 To run a VSTS agent on Ubuntu 16.04 for a specific account with a custom agent name, pool and a volume mapped agent work folder:
