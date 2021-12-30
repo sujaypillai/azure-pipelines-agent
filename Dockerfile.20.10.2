@@ -4,8 +4,7 @@ FROM ubuntu:20.04
 # Set desired tool versions
 # AZURE_CLI_VERSION=2.24.2
 # TERRAFORM_VERSION=0.15.5
-ARG AZURE_CLI_VERSION
-ARG TERRAFORM_VERSION
+ARG AZURE_CLI_VERSION TERRAFORM_VERSION TARGETOS TARGETARCH
 
 # To make it easier for build and release pipelines to run apt-get,
 # configure apt to not require confirmation (assume the -y argument by default)
@@ -20,6 +19,7 @@ ENV JAVA_HOME /usr/local/openjdk-8
 ENV PATH $JAVA_HOME/bin:/usr/local/bin:$PATH
 ENV JAVA_TOOL_OPTIONS=-Dfile.encoding=UTF8
 ENV TERRAFORM_VERSION 1.1.2
+ENV AGENT_VERSION 2.196.2
 
 RUN echo "APT::Get::Assume-Yes \"true\";" > /etc/apt/apt.conf.d/90assumeyes
 RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/apt apt-get update \
@@ -88,6 +88,13 @@ RUN curl -Os https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terra
  && rm terraform_${TERRAFORM_VERSION}_linux_amd64.zip
 
 WORKDIR /azp
+
+RUN if [ "$TARGETARCH" = "amd64" ]; then \
+      AZP_AGENTPACKAGE_URL=https://vstsagentpackage.azureedge.net/agent/${AGENT_VERSION}/vsts-agent-linux-x64-${AGENT_VERSION}.tar.gz; \
+    else \
+      AZP_AGENTPACKAGE_URL=https://vstsagentpackage.azureedge.net/agent/${AGENT_VERSION}/vsts-agent-linux-${TARGETARCH}-${AGENT_VERSION}.tar.gz; \
+    fi; \
+    curl -LsS "$AZP_AGENTPACKAGE_URL" | tar -xz
 
 COPY ./start.sh .
 RUN chmod +x start.sh

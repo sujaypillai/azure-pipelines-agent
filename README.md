@@ -1,19 +1,20 @@
 # Introduction
-This project holds 2 dockerfiles to generate custom Azure DevOps Agent [vsts-agent] docker images
+This project holds 2 dockerfiles to generate custom Azure Pipelines Agent docker images
 
 # Getting Started
-To run a VSTS agent on Ubuntu 16.04 for a specific account with a custom agent name, pool and a volume mapped agent work folder:
+To run a Azure Pipelines agent on Ubuntu 20.04 for a specific account with a custom agent name, pool and a volume mapped agent work folder:
 
 ```
-docker run \
-  -e VSTS_ACCOUNT=jblprd \
-  -e VSTS_TOKEN=<pat> \
-  -e VSTS_AGENT='$(hostname)-agent' \
-  -e VSTS_POOL=docker \
-  -e VSTS_WORK='/var/vsts/$VSTS_AGENT' \
-  -v /var/run/docker.sock:/var/run/docker.sock \
-  -v /var/vsts:/var/vsts \
-  -it microsoft/vsts-agent:ubuntu-16.04
+AZP_URL=https://dev.azure.com/sujayopillai0096
+AZP_TOKEN=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+AZP_AGENT_NAME=DockerAgentLocal
+
+docker run -e AZP_URL=$AZP_URL \
+           -e AZP_TOKEN=$AZP_TOKEN \
+           -e AZP_AGENT_NAME=$AZP_AGENT_NAME \
+           -v /var/run/docker.sock:/var/run/docker.sock \
+           -v /var/vsts:/var/vsts \
+           sujaypillai/vstsagent
 ```
 
 ### `docker` images
@@ -24,6 +25,6 @@ These images do not run "Docker in Docker", but rather re-use the host instance 
 
 # Links
 Below are the some important links to refer:
-
-- [VSTS AGENT Github Project](https://github.com/microsoft/vsts-agent-docker/blob/master/README.md)
-- [Docker Hub image](https://hub.docker.com/_/microsoft-azure-pipelines-vsts-agent)
+- [Azure Pipelines Agent Releases](https://github.com/Microsoft/azure-pipelines-agent/releases)
+- [Run Azure Pipelines in Linux Container](https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/docker?view=azure-devops#linux)
+- [Docker Hub image](https://hub.docker.com/repository/docker/sujaypillai/vstsagent)
