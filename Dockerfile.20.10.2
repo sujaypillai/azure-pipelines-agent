@@ -1,6 +1,12 @@
 # syntax = docker/dockerfile:experimental
 FROM ubuntu:20.04
 
+# Set desired tool versions
+# AZURE_CLI_VERSION=2.24.2
+# TERRAFORM_VERSION=0.15.5
+ARG AZURE_CLI_VERSION
+ARG TERRAFORM_VERSION
+
 # To make it easier for build and release pipelines to run apt-get,
 # configure apt to not require confirmation (assume the -y argument by default)
 ENV DEBIAN_FRONTEND=noninteractive
@@ -9,16 +15,15 @@ ENV DOCKER_VERSION 20.10.2
 ENV DOCKER_COMPOSE_VERSION 1.29.2
 ENV PYTHON_VERSION 3.9.0
 ENV DEFAULT_JDK_VERSION 8
-
 ENV LANG C.UTF-8
-
 ENV JAVA_HOME /usr/local/openjdk-8
 ENV PATH $JAVA_HOME/bin:/usr/local/bin:$PATH
 ENV JAVA_TOOL_OPTIONS=-Dfile.encoding=UTF8
+ENV TERRAFORM_VERSION 1.1.2
 
 RUN echo "APT::Get::Assume-Yes \"true\";" > /etc/apt/apt.conf.d/90assumeyes
 RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/apt apt-get update \
- && apt-get install -y --no-install-recommends build-essential \
+ && apt-get install -y --no-install-recommends azure-cli build-essential \
         ca-certificates \
         curl \
         jq \
@@ -74,6 +79,13 @@ RUN apt-get update \
 ENV ANT_HOME=/usr/share/ant \
     GRADLE_HOME=/usr/share/gradle \
     M2_HOME=/usr/share/maven
+
+# Install Terraform
+# https://releases.hashicorp.com/terraform/1.1.2/terraform_1.1.2_linux_arm64.zip
+RUN curl -Os https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip \
+ && unzip -d /usr/share terraform_${TERRAFORM_VERSION}_linux_amd64.zip \
+ && ln -s /usr/share/terraform /usr/bin/terraform \
+ && rm terraform_${TERRAFORM_VERSION}_linux_amd64.zip
 
 WORKDIR /azp
 
